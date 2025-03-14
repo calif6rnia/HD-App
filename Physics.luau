@@ -9,10 +9,7 @@ local bounce_damp = 0.8
 local max_bounces = 5 -- max bounce
 
 ---# Variables #---
-local ball_update_event = ReplicatedStorage:WaitForChild("BallUpdateEvent")
-local net = workspace:WaitForChild("Net").Net
-local active_conn = nil -- Store the active Heartbeat connection
-local last_update_time = 0
+local active_conn = nil
 
 ---# Module #---
 local physics = {}
@@ -31,36 +28,36 @@ end
 -- this is the main physics code
 
 local function calculate_path(init_velo, angle, look_vec, base_mult, length_mult, speed, start_time, origin, ground_lvl)
-    local path = {}
-    local theta = math.rad(angle)
-    local cos_theta, sin_theta = math.cos(theta), math.sin(theta)
-    local vert_velo = init_velo * sin_theta
-    local bounce_count = 0
-    local max_bounces = 5
-    local bounce_damp = 0.8
-    local elapsed_time = 0
-    
-    while bounce_count <= max_bounces do
-        elapsed_time = (tick() - start_time) * speed
-        local z, y = calc_trajectory(init_velo, cos_theta, sin_theta, elapsed_time)
-        local forward_vec = look_vec.Unit * z * (length_mult or 1) * base_mult
-        local target_pos = origin + forward_vec + Vector3.new(0, y, 0)
-        
-        if target_pos.Y <= ground_lvl then
-            bounce_count = bounce_count + 1
-            if bounce_count > max_bounces then break end
-            
-            angle = 16
-            sin_theta = math.sin(math.rad(angle))
-            vert_velo = -vert_velo * bounce_damp
-            start_time = tick()
-            origin = Vector3.new(target_pos.X, ground_lvl, target_pos.Z)
-        end
-        
-        table.insert(path, target_pos)
-    end
-    
-    return path
+	local path = {}
+	local theta = math.rad(angle)
+	local cos_theta, sin_theta = math.cos(theta), math.sin(theta)
+	local vert_velo = init_velo * sin_theta
+	local bounce_count = 0
+	local max_bounces = 5
+	local bounce_damp = 0.8
+	local elapsed_time = 0
+
+	while bounce_count <= max_bounces do
+		elapsed_time = (tick() - start_time) * speed
+		local z, y = calc_trajectory(init_velo, cos_theta, sin_theta, elapsed_time)
+		local forward_vec = look_vec.Unit * z * (length_mult or 1) * base_mult
+		local target_pos = origin + forward_vec + Vector3.new(0, y, 0)
+
+		if target_pos.Y <= ground_lvl then
+			bounce_count = bounce_count + 1
+			if bounce_count > max_bounces then break end
+
+			angle = 16
+			sin_theta = math.sin(math.rad(angle))
+			vert_velo = -vert_velo * bounce_damp
+			start_time = tick()
+			origin = Vector3.new(target_pos.X, ground_lvl, target_pos.Z)
+		end
+
+		table.insert(path, target_pos)
+	end
+
+	return path
 end
 
 function physics:animate(ball, init_velo, angle, force, distance, base_mult, look_vec, length_mult, speed, dont_adjust) -- this is the function used the most. It pretty much just moves the ball in an arc most of the time but is easy modifable and adjustable for all times of movement
